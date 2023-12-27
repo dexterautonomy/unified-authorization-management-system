@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: unified-auth-mgt-system
+  profiles:
+    active: dev
+  cloud:
+    config:
+      enabled: true
+      fail-fast: true
+      uri: http://localhost:9199
+      username: ${CONFIG_SERVER_USERNAME}
+      password: ${CONFIG_SERVER_PASSWORD}

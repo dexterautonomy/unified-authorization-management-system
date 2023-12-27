@@ -1,0 +1,61 @@
+spring:
+  devtools:
+    add-properties: false
+  main:
+    banner-mode: off
+  thymeleaf:
+    check-template-location: false
+
+# Datasource
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/unified_auth_management_system?createDatabaseIfNotExist=true&autoReconnect=true&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    jpa:
+      show-sql: true
+
+# Spring Security
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          client-1:
+            registration:
+              client-id: client
+              client-secret: secret
+              client-authentication-methods:
+                - client_secret_basic
+              authorization-grant-types:
+                - client_credentials
+                - authorization_code
+                - refresh_token
+              redirect-uris:
+                - http://127.0.0.1:8082/login/oauth2/code/spring
+              scopes:
+                - user.read
+                - user.write
+                - openid
+            require-authorization-consent: true
+
+# Logging
+logging:
+  level:
+    org:
+      springframework:
+        security: trace
+
+server:
+  port: 9192
+
+# Properties
+DB_HOST: localhost
+DB_PORT: 8004
+DB_USERNAME: root
+DB_PASSWORD: dexter
