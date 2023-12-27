@@ -21,32 +21,6 @@ spring:
     jpa:
       show-sql: true
 
-# Spring Security
-#  security:
-#    oauth2:
-#      authorizationserver:
-#        client:
-#          client-1:
-#            registration:
-#              client-id: test-client
-#              client-secret: "{bcrypt}$2a$10$Kap06i8TyIcJELoy3GKpTepH0kHaWZS0WUv/yCkBe6Z7CJa9t5pmS"
-#              client-authentication-methods:
-#                - client_secret_basic
-#              authorization-grant-types:
-#                - password
-#                - client_credentials
-#                - authorization_code
-#                - refresh_token
-#              redirect-uris:
-#                - http://127.0.0.1:8082/login/oauth2/code/spring
-#              scopes:
-#                - read
-#                - write
-#                - openid
-#            require-authorization-consent: true
-#            token:
-#              access-token-time-to-live: 300s
-
 # Logging
 logging:
   level:
