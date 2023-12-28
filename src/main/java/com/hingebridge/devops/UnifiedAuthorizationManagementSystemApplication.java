@@ -11,13 +11,4 @@ public class UnifiedAuthorizationManagementSystemApplication {
     public static void main(String[] args) {
         SpringApplication.run(UnifiedAuthorizationManagementSystemApplication.class, args);
     }
-
-//    @Bean
-//    InMemoryUserDetailsManager inMemoryUserDetailsManager() {
-//        var user = User.withDefaultPasswordEncoder()
-//                .username("user")
-//                .password("password")
-//                .build();
-//        return new InMemoryUserDetailsManager(user);
-//    }
 }

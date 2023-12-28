@@ -55,6 +55,38 @@ import java.util.stream.Collectors;
 @Configuration
 public class AuthorizationServerConfig {
     @Bean
+    public RegisteredClientRepository registeredClientRepository() {
+        RegisteredClient airPayClient = RegisteredClient.withId("airPayClient")
+                .clientId("test-client")
+                .clientSecret("$2a$10$Kap06i8TyIcJELoy3GKpTepH0kHaWZS0WUv/yCkBe6Z7CJa9t5pmS")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUri("http://127.0.0.1:8080/login/oauth2")
+                .postLogoutRedirectUri("http://127.0.0.1:8080/")
+                .scope(OidcScopes.OPENID)
+                .scope("read")
+                .scope("write")
+                .clientSettings(ClientSettings
+                        .builder()
+                        .requireProofKey(true)
+                        .requireAuthorizationConsent(true)
+                        .build()
+                )
+                .tokenSettings(TokenSettings
+                        .builder()
+                        .accessTokenTimeToLive(Duration.ofSeconds(10l))
+                        .build()
+                )
+                .build();
+
+        return new InMemoryRegisteredClientRepository(airPayClient);
+    }
+
+    @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
@@ -98,38 +130,6 @@ public class AuthorizationServerConfig {
                 .build();
 
         return new InMemoryUserDetailsManager(user1, user2);
-    }
-
-    @Bean
-    public RegisteredClientRepository registeredClientRepository() {
-        RegisteredClient airPayClient = RegisteredClient.withId("airPayClient")
-                .clientId("test-client")
-                .clientSecret("$2a$10$Kap06i8TyIcJELoy3GKpTepH0kHaWZS0WUv/yCkBe6Z7CJa9t5pmS")
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
-                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("http://127.0.0.1:8080/login/oauth2")
-                .postLogoutRedirectUri("http://127.0.0.1:8080/")
-                .scope(OidcScopes.OPENID)
-                .scope("read")
-                .scope("write")
-                .clientSettings(ClientSettings
-                        .builder()
-                        .requireProofKey(true)
-                        .requireAuthorizationConsent(true)
-                        .build()
-                )
-                .tokenSettings(TokenSettings
-                        .builder()
-                        .accessTokenTimeToLive(Duration.ofHours(1))
-                        .build()
-                )
-                .build();
-
-        return new InMemoryRegisteredClientRepository(airPayClient);
     }
 
     @Bean
