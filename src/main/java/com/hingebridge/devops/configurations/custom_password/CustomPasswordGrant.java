@@ -11,12 +11,12 @@ import org.springframework.util.StringUtils;
 import java.util.Map;
 import java.util.Set;
 
-public class CustomPasswordGrantAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
+public class CustomPasswordGrant extends OAuth2AuthorizationGrantAuthenticationToken {
+    private String scope;
     private String username;
     private String password;
-    private String scope;
 
-    protected CustomPasswordGrantAuthenticationToken(String grantType, Authentication authentication, Map<String, Object> extraParams) {
+    protected CustomPasswordGrant(String grantType, Authentication authentication, Map<String, Object> extraParams) {
         super(new AuthorizationGrantType(grantType), authentication, extraParams);
 
         this.username = (String) extraParams.get(OAuth2ParameterNames.USERNAME);

@@ -38,7 +38,7 @@ public class CustomPasswordGrantAuthenticationConverter implements Authenticatio
                 extraParams.put(key, value.get(0));
         });
 
-        return new CustomPasswordGrantAuthenticationToken(password, authentication, extraParams);
+        return new CustomPasswordGrant(password, authentication, extraParams);
     }
 
     private static MultiValueMap<String, String> getParameters(HttpServletRequest request) {

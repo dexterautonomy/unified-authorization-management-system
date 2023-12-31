@@ -1,5 +1,7 @@
 package com.hingebridge.devops.configurations.custom_password;
 
+import com.hingebridge.devops.services.CustomUserDetailsService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -7,8 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.*;
@@ -26,7 +27,7 @@ import org.springframework.security.oauth2.server.authorization.context.Authoriz
 import org.springframework.security.oauth2.server.authorization.token.DefaultOAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
-import org.springframework.security.provisioning.UserDetailsManager;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -37,10 +38,12 @@ import java.security.Principal;
 import java.util.*;
 
 @Slf4j
-public class CustomPasswordGrantAuthenticationProvider implements AuthenticationProvider {
+//@Component
+//@RequiredArgsConstructor
+public class CustomAuthenticationProvider implements AuthenticationProvider {
     private final PasswordEncoder passwordEncoder;
-    private final UserDetailsService userDetailsService;
     private final OAuth2AuthorizationService authorizationService;
+    private final CustomUserDetailsService customUserDetailsService;
     private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
     private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
     private static final OAuth2TokenType ID_TOKEN_TOKEN_TYPE = new OAuth2TokenType(OidcParameterNames.ID_TOKEN);
@@ -50,37 +53,37 @@ public class CustomPasswordGrantAuthenticationProvider implements Authentication
     private SessionRegistry sessionRegistry;
     private Set<String> authorizedScopes = new HashSet<>();
 
-    public CustomPasswordGrantAuthenticationProvider(OAuth2AuthorizationService authorizationService, OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator,
-                                                     UserDetailsManager userDetailsService, PasswordEncoder passwordEncoder) {
+    public CustomAuthenticationProvider(OAuth2AuthorizationService authorizationService, OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator,
+                                        CustomUserDetailsService customUserDetailsService, PasswordEncoder passwordEncoder) {
         this.tokenGenerator = tokenGenerator;
         this.passwordEncoder = passwordEncoder;
-        this.userDetailsService = userDetailsService;
         this.authorizationService = authorizationService;
+        this.customUserDetailsService = customUserDetailsService;
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        CustomPasswordGrantAuthenticationToken customCodeGrantAuthentication = (CustomPasswordGrantAuthenticationToken) authentication;
-        OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(customCodeGrantAuthentication);
+        CustomPasswordGrant customPasswordGrant = (CustomPasswordGrant) authentication;
+        OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(customPasswordGrant);
         RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
 
-        username = customCodeGrantAuthentication.getUsername();
-        password = customCodeGrantAuthentication.getPassword();
-        authorizedScopes = customCodeGrantAuthentication.getScope();
+        username = customPasswordGrant.getUsername();
+        password = customPasswordGrant.getPassword();
+        authorizedScopes = customPasswordGrant.getScope();
 
-        User user;
+        UserDetails userDetails;
 
         try {
-            user = (User) userDetailsService.loadUserByUsername(username);
+            userDetails = customUserDetailsService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED);
         }
 
-        if (!passwordEncoder.matches(password, user.getPassword()) || !user.getUsername().equals(username)) {
+        if (!passwordEncoder.matches(password, userDetails.getPassword()) || !userDetails.getUsername().equals(username)) {
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED);
         }
 
-        if (!registeredClient.getAuthorizationGrantTypes().contains(customCodeGrantAuthentication.getGrantType())) {
+        if (!registeredClient.getAuthorizationGrantTypes().contains(customPasswordGrant.getGrantType())) {
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
         }
 
@@ -90,19 +93,22 @@ public class CustomPasswordGrantAuthenticationProvider implements Authentication
             }
         });
 
-        Authentication usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user, null,
-                user.getAuthorities());
+        /*Add all authorities, domain etc. here, you can extend the Authentication or UsernamePasswordAuthenticationToken to do it*/
+        Authentication usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null,
+                userDetails.getAuthorities());
 
         DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
                 .registeredClient(registeredClient)
                 .principal(usernamePasswordAuthenticationToken)
                 .authorizationServerContext(AuthorizationServerContextHolder.getContext())
                 .authorizedScopes(authorizedScopes)
-                .authorizationGrantType(customCodeGrantAuthentication.getGrantType())
-                .authorizationGrant(customCodeGrantAuthentication);
+                .authorizationGrantType(customPasswordGrant.getGrantType())
+                .authorizationGrant(customPasswordGrant);
 
         /*Access Token*/
-        OAuth2TokenContext tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.ACCESS_TOKEN).build();
+        OAuth2TokenContext tokenContext = tokenContextBuilder
+                .tokenType(OAuth2TokenType.ACCESS_TOKEN)
+                .build();
         OAuth2Token generatedAccessToken = this.tokenGenerator.generate(tokenContext);
 
         if (generatedAccessToken == null) {
@@ -111,14 +117,13 @@ public class CustomPasswordGrantAuthenticationProvider implements Authentication
             throw new OAuth2AuthenticationException(error);
         }
 
-        /* Consider for cusomization */
         OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
                 generatedAccessToken.getTokenValue(), generatedAccessToken.getIssuedAt(),
                 generatedAccessToken.getExpiresAt(), null);
 
         OAuth2Authorization.Builder authorizationBuilder = OAuth2Authorization.withRegisteredClient(registeredClient)
                 .principalName(clientPrincipal.getName())
-                .authorizationGrantType(customCodeGrantAuthentication.getGrantType());
+                .authorizationGrantType(customPasswordGrant.getGrantType());
 
         if (generatedAccessToken instanceof ClaimAccessor) {
             authorizationBuilder.token(accessToken,
@@ -149,7 +154,7 @@ public class CustomPasswordGrantAuthenticationProvider implements Authentication
         /*ID Token*/
         OidcIdToken idToken;
 
-        if (customCodeGrantAuthentication.getScope().contains(OidcScopes.OPENID)) {
+        if (customPasswordGrant.getScope().contains(OidcScopes.OPENID)) {
             SessionInformation sessionInformation = getSessionInformation(usernamePasswordAuthenticationToken);
 
             if (sessionInformation != null) {
@@ -201,23 +206,27 @@ public class CustomPasswordGrantAuthenticationProvider implements Authentication
 
         this.authorizationService.save(authorization);
 
-        return new OAuth2AccessTokenAuthenticationToken(registeredClient, usernamePasswordAuthenticationToken, accessToken, refreshToken, additionalParameters);
+        OAuth2AccessTokenAuthenticationToken oAuth2AccessTokenAuthenticationToken =
+                new OAuth2AccessTokenAuthenticationToken(registeredClient, usernamePasswordAuthenticationToken,
+                accessToken, refreshToken, additionalParameters);
+
+        return oAuth2AccessTokenAuthenticationToken;
     }
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return CustomPasswordGrantAuthenticationToken.class.isAssignableFrom(authentication);
+        return CustomPasswordGrant.class.isAssignableFrom(authentication);
     }
 
-    private static OAuth2ClientAuthenticationToken getAuthenticatedClientElseThrowInvalidClient(
-            Authentication authentication) {
+    private static OAuth2ClientAuthenticationToken getAuthenticatedClientElseThrowInvalidClient(Authentication authentication) {
         OAuth2ClientAuthenticationToken clientPrincipal = null;
-        if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(authentication.getPrincipal().getClass())) {
+
+        if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(authentication.getPrincipal().getClass()))
             clientPrincipal = (OAuth2ClientAuthenticationToken) authentication.getPrincipal();
-        }
-        if (clientPrincipal != null && clientPrincipal.isAuthenticated()) {
+
+        if (clientPrincipal != null && clientPrincipal.isAuthenticated())
             return clientPrincipal;
-        }
+
         throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
     }
 
