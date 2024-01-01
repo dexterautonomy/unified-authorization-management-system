@@ -1,4 +1,4 @@
-package com.hingebridge.devops.models.data;
+package com.hingebridge.devops.configurations.data;
 
 import com.hingebridge.devops.models.entities.User;
 import org.springframework.security.core.GrantedAuthority;

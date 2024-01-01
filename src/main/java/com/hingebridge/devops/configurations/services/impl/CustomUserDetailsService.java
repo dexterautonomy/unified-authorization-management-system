@@ -1,6 +1,6 @@
-package com.hingebridge.devops.services;
+package com.hingebridge.devops.configurations.services.impl;
 
-import com.hingebridge.devops.models.data.CustomUserDetails;
+import com.hingebridge.devops.configurations.data.CustomUserDetails;
 import com.hingebridge.devops.models.entities.User;
 import com.hingebridge.devops.repository.UserRepository;
 import com.hingebridge.devops.repository.UserRoleRepository;
