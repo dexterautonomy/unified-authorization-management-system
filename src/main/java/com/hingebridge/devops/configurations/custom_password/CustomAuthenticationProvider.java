@@ -77,18 +77,15 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED);
         }
 
-        if (!passwordEncoder.matches(password, userDetails.getPassword()) || !userDetails.getUsername().equals(username)) {
+        if (!passwordEncoder.matches(password, userDetails.getPassword()) || !userDetails.getUsername().equals(username))
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED);
-        }
 
-        if (!registeredClient.getAuthorizationGrantTypes().contains(customPasswordGrant.getGrantType())) {
+        if (!registeredClient.getAuthorizationGrantTypes().contains(customPasswordGrant.getGrantType()))
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
-        }
 
         authorizedScopes.forEach(scope -> {
-            if (!registeredClient.getScopes().contains(scope)) {
+            if (!registeredClient.getScopes().contains(scope))
                 throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_SCOPE);
-            }
         });
 
         /*Add all authorities, domain etc. here, you can extend the Authentication or UsernamePasswordAuthenticationToken to do it*/
