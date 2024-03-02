@@ -9,6 +9,6 @@ import java.io.Serializable;
 @Data
 @Entity
 @Table(name = "role")
-public class Role extends CommonFields implements Serializable {
+public class Role extends BaseProps implements Serializable {
     private String name;
 }

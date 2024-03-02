@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name = "user_role")
-public class UserRole extends CommonFields {
+public class UserRole extends BaseProps {
     private Long userId;
     private Long roleId;
 }

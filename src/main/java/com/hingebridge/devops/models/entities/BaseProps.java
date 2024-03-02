@@ -9,7 +9,7 @@ import java.util.Date;
 
 @Data
 @MappedSuperclass
-public class CommonFields implements Serializable {
+public class BaseProps implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

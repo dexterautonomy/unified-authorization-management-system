@@ -12,7 +12,7 @@ import java.util.Collection;
 @Data
 @Entity
 @Table(name = "user")
-public class User extends CommonFields implements Serializable {
+public class User extends BaseProps implements Serializable {
     private String lastname;
     private String username;
     private String firstname;
