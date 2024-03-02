@@ -9,6 +9,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -16,10 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2Token;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.InMemoryOAuth2AuthorizationService;
@@ -43,6 +41,10 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.util.UUID;
 
+import static org.springframework.security.oauth2.core.AuthorizationGrantType.*;
+import static org.springframework.security.oauth2.core.ClientAuthenticationMethod.*;
+import static org.springframework.security.oauth2.core.oidc.OidcScopes.OPENID;
+
 @Configuration
 @RequiredArgsConstructor
 public class AuthorizationServerConfig {
@@ -50,26 +52,38 @@ public class AuthorizationServerConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final CustomOAuth2TokenCustomizer customOAuth2TokenCustomizer;
 
-    private static final String CLIENT_ID = "airPayClient";
-    private static final String REDIRECT_URI = "http://127.0.0.1:8080/login/oauth2";
-    private static final String POST_LOGOUT_REDIRECT_URI = "http://127.0.0.1:8080/";
-    private static final String CLIENT_SECRET = "$2a$10$Kap06i8TyIcJELoy3GKpTepH0kHaWZS0WUv/yCkBe6Z7CJa9t5pmS";
+    @Value("${registered.client.id}")
+    private String clientId;
+    @Value("${registered.client.scope}")
+    private String scope;
+    @Value("${registered.client.redirect_uri}")
+    private String redirectUri;
+    @Value("${registered.client.secret}")
+    private String clientSecret;
+    @Value("${registered.client.post_logout_redirect_uri}")
+    private String postLogoutRedirectUri;
+    @Value("${registered.client.token.expires_in}")
+    private long tokenDuration;
+
+    /*
+    * Use this bean for client credentials declaration as against declaring in the properties file
+    * */
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
-        RegisteredClient airPayClient = RegisteredClient.withId(CLIENT_ID)
-                .clientId(CLIENT_ID)
-                .clientSecret(CLIENT_SECRET)
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .authorizationGrantType(AuthorizationGrantType.PASSWORD)
-                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri(REDIRECT_URI)
-                .postLogoutRedirectUri(POST_LOGOUT_REDIRECT_URI)
-                .scope(OidcScopes.OPENID)
-                .scope("read")
+        RegisteredClient registeredClient1 = RegisteredClient.withId(clientId)
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .clientAuthenticationMethod(CLIENT_SECRET_POST)
+                .clientAuthenticationMethod(CLIENT_SECRET_BASIC)
+                .authorizationGrantType(PASSWORD)
+                .authorizationGrantType(REFRESH_TOKEN)
+                .authorizationGrantType(CLIENT_CREDENTIALS)
+                .authorizationGrantType(AUTHORIZATION_CODE)
+                .redirectUri(redirectUri)
+                .postLogoutRedirectUri(postLogoutRedirectUri)
+                .scope(OPENID)
+                .scope(scope)
                 .clientSettings(ClientSettings
                         .builder()
                         .requireProofKey(true)
@@ -78,12 +92,12 @@ public class AuthorizationServerConfig {
                 )
                 .tokenSettings(TokenSettings
                         .builder()
-                        .accessTokenTimeToLive(Duration.ofHours(1L))
+                        .accessTokenTimeToLive(Duration.ofHours(tokenDuration))
                         .build()
                 )
                 .build();
 
-        return new InMemoryRegisteredClientRepository(airPayClient);
+        return new InMemoryRegisteredClientRepository(registeredClient1);
     }
 
     @Bean

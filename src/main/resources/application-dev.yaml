@@ -21,6 +21,17 @@ spring:
     jpa:
       show-sql: true
 
+#Registered Client Config
+registered:
+  client:
+    id: 'airPayClient'
+    secret: '$2a$10$Kap06i8TyIcJELoy3GKpTepH0kHaWZS0WUv/yCkBe6Z7CJa9t5pmS'
+    scope: read
+    redirect_uri: 'http://127.0.0.1:8080/login/oauth2'
+    post_logout_redirect_uri: 'http://127.0.0.1:8080/'
+    token:
+      expires_in: 1
+
 # Logging
 logging:
   level:
