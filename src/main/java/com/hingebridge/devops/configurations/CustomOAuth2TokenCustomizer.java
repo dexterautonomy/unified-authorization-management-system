@@ -27,7 +27,6 @@ public class CustomOAuth2TokenCustomizer implements OAuth2TokenCustomizer<JwtEnc
         if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
             context
                     .getClaims()
-                    .claim("scope", tokenDetail.getAuthorities())
                     .claim("extraDetails", tokenDetailBuilder.buildTokenDetail(context));
         }
     }
