@@ -36,8 +36,6 @@ import java.security.Principal;
 import java.util.*;
 
 @Slf4j
-//@Component
-//@RequiredArgsConstructor
 public class CustomAuthenticationProvider implements AuthenticationProvider {
     private final PasswordEncoder passwordEncoder;
     private final OAuth2AuthorizationService authorizationService;

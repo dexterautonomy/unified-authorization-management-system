@@ -1,5 +1,6 @@
 package com.hingebridge.devops.configurations;
 
+import com.hingebridge.devops.configurations.data.TokenDetail;
 import com.hingebridge.devops.configurations.services.impl.TokenDetailBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
@@ -15,15 +16,19 @@ public class CustomOAuth2TokenCustomizer implements OAuth2TokenCustomizer<JwtEnc
 
     @Override
     public void customize(JwtEncodingContext context) {
+        TokenDetail tokenDetail = tokenDetailBuilder.buildTokenDetail(context);
+
         if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
             context
                     .getClaims()
+                    .claim("scope", tokenDetail.getAuthorities())
                     .claim("extraDetails", tokenDetailBuilder.buildTokenDetail(context));
         }
 
         if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
             context
                     .getClaims()
+                    .claim("scope", tokenDetail.getAuthorities())
                     .claim("extraDetails", tokenDetailBuilder.buildTokenDetail(context));
         }
     }
